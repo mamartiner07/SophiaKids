@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOPHIA KIDS | Academia de Héroes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff00c8;
+            --bg: #050a14;
+            --surface: rgba(10, 20, 40, 0.7);
+            --text: #e0faff;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(112, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 242, 255, 0.1) 0%, transparent 40%);
+        }
+
+        /* Canvas Background */
+        #heroCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.3));
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            letter-spacing: 2px;
+            color: var(--primary);
+        }
+
+        /* Hero Button */
+        .btn-primary {
+            position: relative;
+            padding: 1.5rem 3.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--bg);
+            background: var(--primary);
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.4);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 242, 255, 0.6);
+            background: #fff;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: 0.6s;
+            pointer-events: none;
+        }
+
+        .btn-primary:hover::after {
+            left: 120%;
+        }
+
+        /* Terminal Display */
+        #log-container {
+            width: 100%;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+
+        #log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #log-container::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 10px;
+        }
+
+        .log-entry {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            padding: 8px 12px;
+            border-radius: 8px;
+            animation: slideInLeft 0.3s ease-out;
+        }
+
+        .log-hero {
+            color: var(--primary);
+            background: rgba(0, 242, 255, 0.05);
+            border-left: 3px solid var(--primary);
+        }
+
+        .log-user {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #fff;
+        }
+
+        .log-system {
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Voice Indicator */
+        #voice-ui {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .visualizer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            height: 40px;
+        }
+
+        .bar {
+            width: 4px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: pulse 1s infinite ease-in-out;
+        }
+
+        .bar:nth-child(2) {
+            animation-delay: 0.1s;
+            height: 20px;
+        }
+
+        .bar:nth-child(3) {
+            animation-delay: 0.2s;
+            height: 35px;
+        }
+
+        .bar:nth-child(4) {
+            animation-delay: 0.3s;
+            height: 25px;
+        }
+
+        .bar:nth-child(5) {
+            animation-delay: 0.4s;
+            height: 15px;
+        }
+
+        .listening-text {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--primary);
+            animation: blink 1.5s infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleUp {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scaleY(1);
+            }
+
+            50% {
+                transform: scaleY(2);
+            }
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="heroCanvas"></canvas>
+
+    <div class="container">
+        <header id="main-header">
+            <div class="subtitle">SOPHIA PROTOCOL v2.0</div>
+            <h1>Academia de Héroes</h1>
+        </header>
+
+        <button id="startBtn" class="btn-primary" onclick="initMission()">
+            <span>INICIAR MISIÓN</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        </button>
+
+        <div id="log-container"></div>
+
+        <div id="voice-ui">
+            <div class="visualizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <div class="listening-text">Sincronizando Voz...</div>
+        </div>
+    </div>
+
+    <!-- UTILITIES & BACKEND BRIDGE -->
+    <script>
+        // ✅ PON AQUÍ TU URL DE /exec DE GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3shGF1FAU9yr2HFwwKFE4u8y6rgtAbNCG4yHCT2IEnJtbl4_dPKdLYp6t84AeDeI/exec";
+
+        /**
+         * Bridge to call backend functions using fetch (External Hosting)
+         */
+        async function callServer(type, text) {
+            if (!SCRIPT_URL) {
+                console.error("SCRIPT_URL no definida");
+                return { success: false, error: "URL de API no configurada" };
+            }
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ type, text })
+                });
+                return await res.json();
+            } catch (err) {
+                return { success: false, error: err.message };
+            }
+        }
+
+        const logContainer = document.getElementById('log-container');
+
+        function addLog(text, type = 'system') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+
+            let prefix = '';
+            if (type === 'hero') prefix = '<b>SOPHIA:</b> ';
+            if (type === 'user') prefix = '<b>RECLUTA:</b> ';
+
+            entry.innerHTML = prefix;
+            const contentSpan = document.createElement('span');
+            entry.appendChild(contentSpan);
+
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            if (!logContainer.style.display || logContainer.style.display === 'none') {
+                logContainer.style.display = 'flex';
+            }
+
+            return contentSpan;
+        }
+
+        function typeText(element, text, speed = 30) {
+            return new Promise(resolve => {
+                let i = 0;
+                function type() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                        setTimeout(type, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+    </script>
+
+    <!-- MATRIX / HERO BACKGROUND EFFECT -->
+    <script>
+        const canvas = document.getElementById("heroCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let width, height, columns;
+        const fontSize = 16;
+        let drops = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            columns = Math.floor(width / fontSize);
+            drops = Array(columns).fill(1);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@&";
+
+        function draw() {
+            ctx.fillStyle = "rgba(5, 10, 20, 0.1)";
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = "#00f2ff";
+            ctx.font = fontSize + "px 'JetBrains Mono'";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 33);
+    </script>
+
+    <!-- CORE LOGIC / MISSION FLOW -->
+    <script>
+        let currentStep = 0;
+        const voiceUI = document.getElementById('voice-ui');
+
+        async function speak(text) {
+            try {
+                const response = await callServer('tts', text);
+                if (response.success) {
+                    const audio = new Audio("data:audio/mp3;base64," + response.audio);
+                    const contentSpan = addLog("", 'hero');
+
+                    audio.onplay = () => {
+                        typeText(contentSpan, text);
+                    };
+
+                    await audio.play();
+                } else {
+                    const span = addLog("", 'system');
+                    span.textContent = "Error de voz: " + response.error;
+                }
+            } catch (err) {
+                console.error("Connection Error:", err);
+            }
+        }
+
+        /**
+         * STT Directo (Funciona en Hosting Externo HTTPS como GitHub Pages)
+         */
+        function listen() {
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!Recognition) {
+                addLog("Tu navegador no soporta reconocimiento de voz.", "system");
+                return;
+            }
+
+            const rec = new Recognition();
+            rec.lang = 'es-US';
+            rec.interimResults = false;
+            rec.maxAlternatives = 1;
+
+            voiceUI.style.display = 'flex';
+
+            rec.onresult = event => {
+                const transcript = event.results[0][0].transcript;
+                const span = addLog("", 'user');
+                span.textContent = transcript;
+
+                voiceUI.style.display = 'none';
+                handleResponse(transcript);
+            };
+
+            rec.onerror = e => {
+                console.error("STT Error:", e.error);
+                voiceUI.style.display = 'none';
+
+                if (e.error === 'not-allowed') {
+                    addLog(" Permiso de micrófono denegado. Revisa la configuración de tu navegador.", "system");
+                } else if (e.error === 'no-speech') {
+                    addLog("No detecté sonido. Intentémoslo de nuevo...", "system");
+                    setTimeout(listen, 1000);
+                } else {
+                    addLog("Error en reconocimiento: " + e.error, "system");
+                }
+            };
+
+            rec.start();
+        }
+
+        async function initMission() {
+            if (!SCRIPT_URL) {
+                alert("Por favor, configura tu SCRIPT_URL en el código de index.html antes de iniciar.");
+                return;
+            }
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('main-header').classList.add('hidden');
+
+            currentStep = 1;
+            const span = addLog("", "system");
+            span.textContent = "Iniciando Protocolo Externo...";
+            await speak("¡Bienvenido héroe! Identifícate. Dime tu nombre.");
+            listen();
+        }
+
+        async function handleResponse(text) {
+            const input = text.toLowerCase();
+
+            if (currentStep === 1) {
+                currentStep = 2;
+                await speak(`Hola recluta ${text}. Di 'listo' cuando estés preparado para comenzar.`);
+                listen();
+                return;
+            }
+
+            if (currentStep === 2 && input.includes("listo")) {
+                currentStep = 3;
+                await speak("Excelente. La palabra clave de hoy es: Protocolo. Repítela fuerte y claro.");
+                listen();
+                return;
+            }
+
+            if (currentStep === 3 && input.includes("protocolo")) {
+                currentStep = 4;
+                await speak("Acceso confirmado. Analizando sistemas... ¿Es una falla grave o leve?");
+                listen();
+                return;
+            }
+
+            if (currentStep === 4) {
+                currentStep = 5;
+                await speak("Registrado. Ahora debemos asegurar el perímetro. Di: Activar escudo.");
+                listen();
+                return;
+            }
+
+            if (currentStep === 5 && input.includes("activar escudo")) {
+                currentStep = 6;
+                const span = addLog("", "system");
+                span.textContent = "Escudos deflectores al 100%.";
+                await speak("¡Escudo activo! El enemigo retrocede. Di: Ciber-Sombría ha sido derrotada.");
+                listen();
+                return;
+            }
+
+            if (currentStep === 6 && input.includes("derrotada")) {
+                const s1 = addLog("", "system");
+                s1.textContent = "¡Victoria detectada!";
+                await speak("¡MISIÓN COMPLETADA, HÉROE! Has salvado el Service Desk.");
+
+                setTimeout(() => {
+                    const s2 = addLog("", "system");
+                    s2.textContent = "Sesión finalizada. Reiniciando terminal...";
+                    setTimeout(() => window.location.reload(), 3000);
+                }, 2000);
+            } else {
+                await speak("No te he entendido bien, repitelo héroe.");
+                listen();
+            }
+        }
+    </script>
+</body>
+
+</html>
