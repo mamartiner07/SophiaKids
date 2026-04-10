@@ -325,6 +325,47 @@
             box-shadow: 0 0 30px rgba(46, 204, 113, 0.2);
         }
 
+        #quick-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .action-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 242, 255, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         .hidden {
             display: none !important;
         }
@@ -338,19 +379,19 @@
         <!-- RPG Stats -->
         <div id="rpg-stats">
             <div class="stat-group">
-                <div class="stat-label"><span>Integridad (HP)</span><span id="hp-val">100%</span></div>
+                <div class="stat-label"><span>Vida ❤️</span><span id="hp-val">100%</span></div>
                 <div class="bar-bg">
                     <div id="hp-fill" class="bar-fill"></div>
                 </div>
             </div>
             <div class="stat-group">
-                <div class="stat-label"><span>Sincronía (EN)</span><span id="energy-val">100%</span></div>
+                <div class="stat-label"><span>Energía ⚡</span><span id="energy-val">100%</span></div>
                 <div class="bar-bg">
                     <div id="energy-fill" class="bar-fill"></div>
                 </div>
             </div>
             <div class="stat-group">
-                <div class="stat-label"><span>Rango (XP)</span><span id="xp-val">0</span></div>
+                <div class="stat-label"><span>Puntos ⭐</span><span id="xp-val">0</span></div>
                 <div class="bar-bg">
                     <div id="xp-fill" class="bar-fill" style="width:0%"></div>
                 </div>
@@ -376,8 +417,8 @@
 
         <!-- Objective Widget -->
         <div id="objective-widget">
-            <div class="objective-title">Misión en Curso</div>
-            <div id="current-objective">Esperando instrucciones...</div>
+            <div class="objective-title">Misión Especial ⭐</div>
+            <div id="current-objective">¡Esperando órdenes, Héroe! ️‍♂️</div>
         </div>
 
         <button id="startBtn" class="btn-primary" onclick="initMission()">
@@ -386,6 +427,8 @@
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
         </button>
+
+        <div id="quick-actions"></div>
 
         <div id="log-container"></div>
 
@@ -404,7 +447,7 @@
     <!-- UTILITIES & BACKEND BRIDGE -->
     <script>
         // ✅ URL DE TU WEB APP - ¡CÓPIALA AQUÍ!
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1yOiia_OJwwxtKAq5CjHEwDbltV-ED811k3cHDGTJcG-Nfs5zuMStrGe4AwR7X6g/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbySe5lvdEsoKEnxGBX0Wf8YHkzSt2vzfZdPl2O-7PTLMjeVDkyIFH_2qjqGWIRMCVE/exec";
 
         // Game State
         const gameState = {
@@ -624,7 +667,7 @@
             gameState.isProcessing = true;
             console.log("[Logic] Handling input:", userInput);
 
-            const loadingLog = addLog("Estableciendo conexión neuronal...", "system");
+            const loadingLog = addLog("¡Llamando a Sophia! ...", "system");
 
             try {
                 const aiRes = await callServer('ia', userInput);
@@ -635,8 +678,25 @@
                     console.log("[Logic] AI Data parsed:", data);
                     gameState.history.push({ role: "model", text: JSON.stringify(data) });
 
-                    objectiveText.textContent = data.objective || "Sin objetivo";
+                    objectiveText.textContent = data.objective || "¡Esperando órdenes! ️‍♂️";
                     if (data.status_updates) updateUI(data.status_updates);
+
+                    // Botones de acción rápida
+                    const actionContainer = document.getElementById('quick-actions');
+                    actionContainer.innerHTML = '';
+                    if (data.quick_actions && data.quick_actions.length > 0) {
+                        data.quick_actions.forEach(act => {
+                            const btn = document.createElement('button');
+                            btn.className = 'action-btn';
+                            btn.textContent = act;
+                            btn.onclick = () => {
+                                addLog(act, 'user');
+                                handleResponse(act);
+                                actionContainer.innerHTML = ''; // Limpiar tras clic
+                            };
+                            actionContainer.appendChild(btn);
+                        });
+                    }
 
                     await speak(data.speech || "...", data.visual_cue);
 
