@@ -403,7 +403,7 @@
 
     <!-- UTILITIES & BACKEND BRIDGE -->
     <script>
-        // ✅ URL DE TU WEB APP
+        // ✅ URL DE TU WEB APP - ¡CÓPIALA AQUÍ!
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQ5w6QzhGJLH3hv5akJhcB0GS-1LQQkX-Tx9PTcZOPdHteJSzI78LzOOuRb1kfnA/exec";
 
         // Game State
@@ -416,19 +416,31 @@
         };
 
         async function callServer(type, text) {
-            if (!SCRIPT_URL) return { success: false, error: "URL no configurada" };
+            console.log(`[Server] Calling ${type}...`);
+            if (!SCRIPT_URL || SCRIPT_URL === "") {
+                console.error("[Server] SCRIPT_URL is empty");
+                return { success: false, error: "DEBUG: Debes configurar SCRIPT_URL en la línea 407 de index.html" };
+            }
             try {
                 const res = await fetch(SCRIPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    mode: "cors",
                     body: JSON.stringify({
                         type,
                         text,
-                        history: gameState.history.slice(-6) // Solo enviamos los últimos 6 mensajes para ahorrar tokens
+                        history: gameState.history.slice(-6)
                     })
                 });
-                return await res.json();
+                if (!res.ok) {
+                    console.error(`[Server] HTTP Error: ${res.status}`);
+                    return { success: false, error: `Error HTTP ${res.status}` };
+                }
+                const data = await res.json();
+                console.log("[Server] Response received:", data);
+                return data;
             } catch (err) {
+                console.error("[Server] Fetch Error:", err);
                 return { success: false, error: err.message };
             }
         }
@@ -444,18 +456,18 @@
         const coreGlow = document.getElementById('core-glow');
 
         function updateUI(updates) {
-            if (updates.hp) {
+            if (updates.hp !== undefined) {
                 gameState.hp = Math.min(100, Math.max(0, gameState.hp + updates.hp));
                 hpFill.style.width = gameState.hp + "%";
                 hpVal.textContent = gameState.hp + "%";
                 if (updates.hp < 0) flashUI('alert');
             }
-            if (updates.energy) {
+            if (updates.energy !== undefined) {
                 gameState.energy = Math.min(100, Math.max(0, gameState.energy + updates.energy));
                 energyFill.style.width = gameState.energy + "%";
                 energyVal.textContent = gameState.energy + "%";
             }
-            if (updates.xp) {
+            if (updates.xp !== undefined) {
                 gameState.xp += updates.xp;
                 xpVal.textContent = gameState.xp;
                 xpFill.style.width = (gameState.xp % 100) + "%";
@@ -465,8 +477,10 @@
 
         function flashUI(type) {
             const container = document.querySelector('.container');
-            container.classList.add(`visual-${type}`);
-            setTimeout(() => container.classList.remove(`visual-${type}`), 1000);
+            if (container) {
+                container.classList.add(`visual-${type}`);
+                setTimeout(() => container.classList.remove(`visual-${type}`), 1000);
+            }
         }
 
         function addLog(text, type = 'system') {
@@ -475,6 +489,7 @@
             let prefix = type === 'hero' ? '<b>SOPHIA:</b> ' : (type === 'user' ? '<b>RECLUTA:</b> ' : '');
             entry.innerHTML = prefix;
             const contentSpan = document.createElement('span');
+            if (text) contentSpan.textContent = text;
             entry.appendChild(contentSpan);
             logContainer.appendChild(entry);
             logContainer.scrollTop = logContainer.scrollHeight;
@@ -482,7 +497,7 @@
             return contentSpan;
         }
 
-        function typeText(element, text, speed = 25) {
+        function typeText(element, text, speed = 20) {
             return new Promise(resolve => {
                 let i = 0;
                 function type() {
@@ -532,7 +547,7 @@
 
         async function speak(text, cue = 'normal') {
             try {
-                // Actualizar color del core basado en visual_cue
+                console.log("[Audio] Speaking:", text);
                 const colors = { normal: '#00f2ff', alert: '#ff2e63', success: '#2ecc71', critical: '#ff00c8' };
                 coreGlow.style.background = `radial-gradient(circle, ${colors[cue] || colors.normal} 0%, transparent 70%)`;
 
@@ -540,18 +555,32 @@
                 if (response.success) {
                     const audio = new Audio("data:audio/mp3;base64," + response.audio);
                     const contentSpan = addLog("", 'hero');
-                    audio.onplay = () => typeText(contentSpan, text);
-                    await audio.play();
-                    return new Promise(resolve => audio.onended = resolve);
+
+                    return new Promise((resolve) => {
+                        audio.onplay = () => typeText(contentSpan, text);
+                        audio.onended = () => { console.log("[Audio] Finished"); resolve(); };
+                        audio.onerror = (e) => {
+                            console.error("[Audio] Error:", e);
+                            contentSpan.textContent = text;
+                            resolve();
+                        };
+                        audio.play().catch(err => {
+                            console.warn("[Audio] Play blocked/failed:", err);
+                            contentSpan.textContent = text;
+                            resolve();
+                        });
+                    });
                 } else {
-                    addLog("Error de voz: " + response.error, "system");
+                    addLog(text, 'hero'); // Mostrar texto aunque no haya audio
+                    console.error("[Audio] TTS Failed:", response.error);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("[Audio] Crash:", err); }
         }
 
         function listen() {
+            console.log("[Voice] Listening start...");
             const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!Recognition) return addLog("Navegador no soportado", "system");
+            if (!Recognition) return addLog("Navegador no soportado para voz", "system");
 
             const rec = new Recognition();
             rec.lang = 'es-US';
@@ -559,18 +588,28 @@
 
             rec.onresult = async event => {
                 const transcript = event.results[0][0].transcript;
+                console.log("[Voice] Result:", transcript);
                 addLog(transcript, 'user');
                 gameState.history.push({ role: "user", text: transcript });
                 voiceUI.style.display = 'none';
                 handleResponse(transcript);
             };
 
-            rec.onerror = () => { voiceUI.style.display = 'none'; setTimeout(listen, 1000); };
+            rec.onerror = (e) => {
+                console.warn("[Voice] Error:", e.error);
+                voiceUI.style.display = 'none';
+                if (e.error !== 'aborted') setTimeout(listen, 1000);
+            };
             rec.start();
         }
 
         async function initMission() {
-            if (!SCRIPT_URL) return alert("Configura SCRIPT_URL");
+            console.log("[App] Initializing mission...");
+            if (!SCRIPT_URL || SCRIPT_URL === "") {
+                addLog("ERROR: SCRIPT_URL no configurada. Edita index.html en la línea 407.", "system");
+                alert("Debes configurar la SCRIPT_URL en index.html antes de empezar.");
+                return;
+            }
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('main-header').classList.add('hidden');
             document.getElementById('rpg-stats').style.display = 'flex';
@@ -581,31 +620,41 @@
         }
 
         async function handleResponse(userInput) {
-            if (gameState.isProcessing) return;
+            if (gameState.isProcessing) { console.warn("[Logic] Already processing"); return; }
             gameState.isProcessing = true;
+            console.log("[Logic] Handling input:", userInput);
 
-            const aiRes = await callServer('ia', userInput);
+            const loadingLog = addLog("Estableciendo conexión neuronal...", "system");
 
-            if (aiRes.success) {
-                const data = aiRes.data;
-                gameState.history.push({ role: "model", text: JSON.stringify(data) });
+            try {
+                const aiRes = await callServer('ia', userInput);
+                if (loadingLog.parentElement) loadingLog.parentElement.remove();
 
-                // Actualizar UI
-                objectiveText.textContent = data.objective;
-                if (data.status_updates) updateUI(data.status_updates);
+                if (aiRes.success) {
+                    const data = aiRes.data;
+                    console.log("[Logic] AI Data parsed:", data);
+                    gameState.history.push({ role: "model", text: JSON.stringify(data) });
 
-                // Hablar
-                await speak(data.speech, data.visual_cue);
+                    objectiveText.textContent = data.objective || "Sin objetivo";
+                    if (data.status_updates) updateUI(data.status_updates);
 
-                if (data.mission_complete) {
-                    addLog("¡MISIÓN FINALIZADA CON ÉXITO!", "system");
-                    setTimeout(() => window.location.reload(), 5000);
+                    await speak(data.speech || "...", data.visual_cue);
+
+                    if (data.mission_complete) {
+                        addLog("¡MISIÓN FINALIZADA!", "system");
+                        setTimeout(() => window.location.reload(), 5000);
+                    } else {
+                        gameState.isProcessing = false;
+                        listen();
+                    }
                 } else {
+                    addLog("Error en enlace: " + aiRes.error, "system");
                     gameState.isProcessing = false;
-                    listen();
+                    // Reintentar si falla la conexión? No por ahora, mejor que el usuario revise la URL.
                 }
-            } else {
-                addLog("Error en enlace neuronal: " + aiRes.error, "system");
+            } catch (err) {
+                console.error("[Logic] Crash:", err);
+                addLog("Error crítico: " + err.message, "system");
                 gameState.isProcessing = false;
             }
         }
