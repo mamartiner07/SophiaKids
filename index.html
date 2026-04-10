@@ -47,7 +47,7 @@
                 radial-gradient(circle at 90% 90%, rgba(0, 242, 255, 0.08) 0%, transparent 40%);
         }
 
-        /* Glass Noise Overlay */
+        /* Glass Noise Overlay (Local SVG for better stability) */
         body::before {
             content: "";
             position: fixed;
@@ -55,8 +55,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04;
             pointer-events: none;
             z-index: 100;
         }
@@ -324,11 +324,10 @@
             border-color: #2ecc71 !important;
             box-shadow: 0 0 30px rgba(46, 204, 113, 0.2);
         }
-    </style>
 
-    .hidden {
-    display: none !important;
-    }
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 
