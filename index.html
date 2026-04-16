@@ -441,10 +441,25 @@
         .hidden {
             display: none !important;
         }
+
+        #logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        #main-logo {
+            max-width: 300px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(249, 212, 35, 0.4));
+        }
     </style>
 </head>
 
 <body>
+    <?!= include('ASSETS'); ?>
     <canvas id="heroCanvas"></canvas>
 
     <div class="container">
@@ -471,7 +486,10 @@
         </div>
 
         <header id="main-header">
-            <h1>SD GalaxIA</h1>
+            <div id="logo-container">
+                <h1 id="text-logo">SD GalaxIA</h1>
+                <img id="main-logo" src="" alt="SD GalaxIA" class="hidden">
+            </div>
             <p style="opacity: 0.6; letter-spacing: 2px;">GALAXY PROTOCOL v4.0 | STAR EXPLORER</p>
         </header>
 
@@ -519,7 +537,7 @@
     <!-- UTILITIES & BACKEND BRIDGE -->
     <script>
         // ✅ URL DE TU WEB APP - ¡CÓPIALA AQUÍ!
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoGQ_WcoGFTdG2Vi6Xz0hXAy8jEM93fOnfm7LXpaJoZZDifj6mHUZ1Vb3pfm_gEUQ/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbySc4vcANOPUzSldLIypUJhTY7pL2J8K50isaZzoVwLs9FwneVNbYERpm13nh8iBBE/exec";
 
         // Game State
         const gameState = {
@@ -748,6 +766,15 @@
                 alert("Debes configurar la SCRIPT_URL en index.html antes de empezar.");
                 return;
             }
+            // Cargar Logo desde Assets
+            const logoImg = document.getElementById('main-logo');
+            const textLogo = document.getElementById('text-logo');
+            if (ASSETS && ASSETS.LOGO_B64 && ASSETS.LOGO_B64 !== "PLACEHOLDER_B64") {
+                logoImg.src = ASSETS.LOGO_B64;
+                logoImg.classList.remove('hidden');
+                textLogo.classList.add('hidden');
+            }
+
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('main-header').classList.add('hidden');
             document.getElementById('rpg-stats').style.display = 'flex';
