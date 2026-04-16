@@ -110,7 +110,7 @@ function processIA(prompt, history = []) {
     const apiKey = getKey("GEMINI_API_KEY");
     if (!apiKey) throw new Error("GEMINI_API_KEY no encontrada");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const systemPrompt = `Eres SD GalaxIA, una guía cósmica súper entusiasta de la 'Aventura Estelar'.
 
@@ -132,13 +132,14 @@ ESTRUCTURA DE RESPUESTA (JSON):
   "status_updates": { "hp": 0, "energy": 0, "xp": 10 },
   "visual_cue": "normal | alert | success | critical",
   "quick_actions": ["¡Listo!", "¿Qué sigue?"],
+  "show_keyword_overlay": false,
   "mission_complete": false
 }
 
 CONTEXTO DE MISIONES:
 - Misión 1 (Bienvenida): Da la bienvenida a SD GalaxIA y pide el grito de "¡Despegue!".
-- Misión 2 (Exploración): Indica que debe ir a las estaciones de la habitación para conseguir la palabra clave. Da ánimos.
-- Misión 3 (Validación): Si dice algo incorrecto, anímalo a seguir buscando en la sala.
+- Misión 2 (Exploración): Indica que debe ir a las estaciones de la habitación para conseguir la palabra clave. Da ánimos. IMPORTANTE: En esta misión debes activar "show_keyword_overlay": true para que aparezca el botón de confirmación tras tu audio.
+- Misión 3 (Validación): Si dice algo incorrecto, anímalo a seguir buscando en la sala. No actives el overlay aquí a menos que repitas las instrucciones de búsqueda.
 - Misión Final (Victoria): Si dice "ESTRELLA AZUL", celebra su triunfo, dale muchos puntos y marca mission_complete: true.`;
 
     const contents = [
