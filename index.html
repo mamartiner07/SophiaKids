@@ -759,20 +759,24 @@
             rec.start();
         }
 
-        async function initMission() {
-            console.log("[App] Initializing mission...");
-            if (!SCRIPT_URL || SCRIPT_URL === "") {
-                addLog("ERROR: SCRIPT_URL no configurada. Edita index.html en la línea 407.", "system");
-                alert("Debes configurar la SCRIPT_URL en index.html antes de empezar.");
-                return;
-            }
-            // Cargar Logo desde Assets
+        // Cargar Assets al inicio
+        function loadAssets() {
             const logoImg = document.getElementById('main-logo');
             const textLogo = document.getElementById('text-logo');
-            if (ASSETS && ASSETS.LOGO_B64 && ASSETS.LOGO_B64 !== "PLACEHOLDER_B64") {
+            if (typeof ASSETS !== 'undefined' && ASSETS.LOGO_B64 && ASSETS.LOGO_B64 !== "PLACEHOLDER_B64") {
+                console.log("[App] Assets found, loading logo...");
                 logoImg.src = ASSETS.LOGO_B64;
                 logoImg.classList.remove('hidden');
                 textLogo.classList.add('hidden');
+            }
+        }
+
+        async function initMission() {
+            console.log("[App] Initializing mission...");
+            if (!SCRIPT_URL || SCRIPT_URL === "") {
+                addLog("ERROR: SCRIPT_URL no configurada. Edita index.html en la línea 540.", "system");
+                alert("Debes configurar la SCRIPT_URL en index.html antes de empezar.");
+                return;
             }
 
             document.getElementById('startBtn').classList.add('hidden');
@@ -840,6 +844,9 @@
                 gameState.isProcessing = false;
             }
         }
+
+        // Ejecutar carga de assets al cargar el script
+        loadAssets();
     </script>
 </body>
 
