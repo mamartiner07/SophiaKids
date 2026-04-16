@@ -713,6 +713,7 @@
         }
 
         let thinkingAudio = null;
+        let fadeInterval = null;
 
         function setProcessing(isProcessing) {
             const container = document.querySelector('.container');
@@ -725,11 +726,15 @@
             }
 
             if (isProcessing) {
+                // Cancelar cualquier fade-out en curso
+                if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+
                 container.classList.add('processing');
                 voiceUI.style.display = 'flex';
                 document.querySelector('.listening-text').textContent = "Procesando...";
 
                 if (thinkingAudio) {
+                    thinkingAudio.volume = 1;
                     thinkingAudio.play().catch(e => console.warn("[Audio] Error playing thinking sound:", e));
                 }
             } else {
@@ -737,9 +742,21 @@
                 voiceUI.style.display = 'none';
                 document.querySelector('.listening-text').textContent = "Escuchando Explorador...";
 
-                if (thinkingAudio) {
-                    thinkingAudio.pause();
-                    thinkingAudio.currentTime = 0;
+                if (thinkingAudio && !thinkingAudio.paused) {
+                    // Implementar ligero fade-out
+                    if (fadeInterval) clearInterval(fadeInterval);
+                    let vol = thinkingAudio.volume;
+                    fadeInterval = setInterval(() => {
+                        vol -= 0.1;
+                        if (vol <= 0) {
+                            thinkingAudio.pause();
+                            thinkingAudio.currentTime = 0;
+                            clearInterval(fadeInterval);
+                            fadeInterval = null;
+                        } else {
+                            thinkingAudio.volume = vol;
+                        }
+                    }, 50); // 500ms total fade roughly
                 }
             }
         }
@@ -824,12 +841,15 @@
 
         async function speak(text, cue = 'normal') {
             try {
+                // Limpiar texto para evitar que el TTS deletree repeticiones largas (ej: AAAAAH)
+                const cleanedText = text.replace(/([a-zA-ZáéíóúÁÉÍÓÚñÑ])\1{2,}/gi, '$1$1');
+
                 console.log("[Audio] Speaking:", text);
                 const colors = { normal: '#00f2ff', alert: '#ff2e63', success: '#2ecc71', critical: '#ff00c8' };
                 coreGlow.style.background = `radial-gradient(circle, ${colors[cue] || colors.normal} 0%, transparent 70%)`;
 
                 setProcessing(true);
-                const response = await callServer('tts', text);
+                const response = await callServer('tts', cleanedText);
                 if (response.success) {
                     const audio = new Audio("data:audio/mp3;base64," + response.audio);
                     const contentSpan = addLog("", 'hero');
@@ -941,6 +961,7 @@
             console.log("[Logic] Handling input:", userInput);
 
             const loadingLog = addLog("¡Llamando a la Galaxia! ...", "system");
+            setProcessing(true);
 
             try {
                 const aiRes = await callServer('ia', userInput);
