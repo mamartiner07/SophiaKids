@@ -475,6 +475,54 @@
             margin-left: 8px;
         }
 
+        #keyword-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay-content {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 0 30px var(--primary);
+            animation: pulse-border 2s infinite;
+        }
+
+        .overlay-content h2 {
+            color: #fff;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 20px var(--primary);
+            }
+
+            50% {
+                box-shadow: 0 0 40px var(--primary);
+            }
+
+            100% {
+                box-shadow: 0 0 20px var(--primary);
+            }
+        }
+
         #main-logo {
             max-width: 300px;
             height: auto;
@@ -565,12 +613,26 @@
             </div>
             <div class="listening-text">Escuchando Explorador...</div>
         </div>
+
+        <!-- Keyword Interaction Overlay -->
+        <div id="keyword-overlay" class="hidden">
+            <div class="overlay-content">
+                <h2>¡MISIÓN EN PROCESO!</h2>
+                <p style="color: #fff; margin-bottom: 2rem;">He guardado las instrucciones. ¿Estás listo?</p>
+                <button class="btn-primary" onclick="onKeywordButtonClick()">
+                    <span>Tengo la palabra secreta</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1v22M17 5l-5-5-5 5M17 19l-5 5-5-5" />
+                    </svg>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- UTILITIES & BACKEND BRIDGE -->
     <script>
         // ✅ URL DE TU WEB APP - ¡CÓPIALA AQUÍ!
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPaC0PeFKGXS1m12roP3QFLwMDEKMX9HOaTtguWIWIAjxwsCv7ZvBaY9IEaCvRg0I/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTNyjk6sowC8ZfTU8OIxOPEfzKhenFEf1Fn9a-3dgnrFUtHTrB0w8gkOBrTqJwock/exec";
 
         // Game State
         const gameState = {
@@ -849,6 +911,11 @@
             handleResponse("INICIAR PROTOCOLO");
         }
 
+        function onKeywordButtonClick() {
+            document.getElementById('keyword-overlay').classList.add('hidden');
+            listen();
+        }
+
         async function handleResponse(userInput) {
             if (gameState.isProcessing) { console.warn("[Logic] Already processing"); return; }
             gameState.isProcessing = true;
@@ -890,6 +957,9 @@
                     if (data.mission_complete) {
                         addLog("¡MISIÓN FINALIZADA!", "system");
                         setTimeout(() => window.location.reload(), 5000);
+                    } else if (data.show_keyword_overlay) {
+                        gameState.isProcessing = false;
+                        document.getElementById('keyword-overlay').classList.remove('hidden');
                     } else {
                         gameState.isProcessing = false;
                         listen();
