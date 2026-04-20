@@ -645,8 +645,7 @@
         const hpVal = document.getElementById('hp-val');
         const energyVal = document.getElementById('energy-val');
         const xpVal = document.getElementById('xp-val');
-        const objectiveText = document.getElementById('current-objective');
-        const coreGlow = document.getElementById('core-glow');
+        // References to objective widget and core glow removed as elements were deleted.
 
         function updateUI(updates) {
             if (updates.hp !== undefined) {
@@ -810,7 +809,7 @@
 
                 console.log("[Audio] Speaking:", text);
                 const colors = { normal: '#00f2ff', alert: '#ff2e63', success: '#2ecc71', critical: '#ff00c8' };
-                coreGlow.style.background = `radial-gradient(circle, ${colors[cue] || colors.normal} 0%, transparent 70%)`;
+                // coreGlow styling removed as element was deleted
 
                 setProcessing(true);
                 const response = await callServer('tts', cleanedText);
@@ -934,7 +933,7 @@
                     console.log("[Logic] AI Data parsed:", data);
                     gameState.history.push({ role: "model", text: JSON.stringify(data) });
 
-                    objectiveText.textContent = data.objective || "¡Esperando órdenes! ️‍♂️";
+                    // objectiveText update removed as element was deleted
                     if (data.status_updates) updateUI(data.status_updates);
 
                     // Botones de acción rápida
