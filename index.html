@@ -727,7 +727,7 @@
         function addLog(text, type = 'system') {
             const entry = document.createElement('div');
             entry.className = `log-entry log-${type}`;
-            let prefix = type === 'hero' ? '<b>SD GALAXIA:</b> ' : (type === 'user' ? '<b>EXPLORADOR:</b> ' : '');
+            let prefix = type === 'hero' ? '<b>CHAMPI:</b> ' : (type === 'user' ? '<b>EXPLORADOR:</b> ' : '');
             entry.innerHTML = prefix;
             const contentSpan = document.createElement('span');
             if (text) contentSpan.textContent = text;
