@@ -538,6 +538,27 @@
             object-fit: contain;
             filter: drop-shadow(0 0 10px rgba(249, 212, 35, 0.4));
         }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        #splash-video {
+            height: 90vh; /* Vertical orientation */
+            max-width: 100vw;
+            object-fit: contain;
+        }
     </style>
 </head>
 
@@ -633,6 +654,15 @@
                 </button>
             </div>
         </div>
+
+        <!-- Splash Screen -->
+        <div id="splash-screen" class="hidden">
+            <video id="splash-video" playsinline>
+                <!-- Video local para GitHub Pages -->
+                <source src="splash_sophia.mp4" type="video/mp4">
+                Tu navegador no soporta el elemento de video.
+            </video>
+        </div>
     </div>
 
     <!-- UTILITIES & BACKEND BRIDGE -->
@@ -648,6 +678,27 @@
             history: [],
             isProcessing: false
         };
+
+        let splashPromise = null;
+
+        function showSplashScreen() {
+            const splash = document.getElementById('splash-screen');
+            const video = document.getElementById('splash-video');
+            console.log("[Splash] Showing splash screen...");
+            splash.classList.remove('hidden');
+            video.play().catch(e => console.warn("[Splash] Video play failed:", e));
+
+            return new Promise((resolve) => {
+                video.onended = () => {
+                    console.log("[Splash] Video ended.");
+                    splash.style.opacity = '0';
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                        resolve();
+                    }, 500);
+                };
+            });
+        }
 
         async function callServer(type, text) {
             console.log(`[Server] Calling ${type}...`);
@@ -951,8 +1002,9 @@
 
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('main-header').classList.add('hidden');
-            document.getElementById('rpg-stats').style.display = 'flex';
-            document.getElementById('sophia-avatar').style.display = 'flex';
+
+            // Mostrar Splash Screen y guardar la promesa
+            splashPromise = showSplashScreen();
 
             handleResponse("INICIAR PROTOCOLO");
         }
@@ -977,9 +1029,19 @@
                 if (aiRes.success) {
                     const data = aiRes.data;
                     console.log("[Logic] AI Data parsed:", data);
+
+                    // Esperar a que el splash termine antes de mostrar la UI y hablar
+                    if (splashPromise) {
+                        console.log("[Logic] Waiting for splash video to end...");
+                        await splashPromise;
+                        splashPromise = null;
+                        // Mostrar UI de conversación
+                        document.getElementById('rpg-stats').style.display = 'flex';
+                        document.getElementById('sophia-avatar').style.display = 'flex';
+                    }
+
                     gameState.history.push({ role: "model", text: JSON.stringify(data) });
 
-                    // objectiveText update removed as element was deleted
                     if (data.status_updates) updateUI(data.status_updates);
 
                     // Botones de acción rápida
