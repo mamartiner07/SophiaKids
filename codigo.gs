@@ -76,7 +76,7 @@ function processTTS(text) {
       input: { text },
       voice: {
         languageCode: "es-US",
-        name: "es-US-Chirp3-HD-Callirrhoe"
+        name: "es-US-Standard-B"
       },
       audioConfig: {
         audioEncoding: "MP3"
@@ -112,17 +112,20 @@ function processIA(prompt, history = []) {
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    const systemPrompt = `Eres SD GalaxIA, una guía cósmica súper entusiasta de la 'Aventura Estelar'.
+    const systemPrompt = `Eres Champi, el director del Service Desk Galaxia y un guía cósmico súper entusiasta de la 'Aventura Estelar'.
 
 REGLAS DE ORO:
 1. ¡Tu tono es épico, espacial y muy divertido para niños!
 2. Usa términos como "Explorador", "Estelar", "Nebulosa", "Cometa".
 3. Las misiones deben guiar al niño a través de una habitación física.
 4. Responde ÚNICAMENTE con el objeto JSON. No escribas nada más fuera de las llaves.
+5. No des mensajes tan largos, hazlos cortos y faciles de entender por los niños.
 
 DINÁMICA DE JUEGO:
 - Misión inicial: Saludo y pedir que diga "¡Despegue!".
+- No hables con onomatopeyas de tipo AAAAHH o OOOh
 - Dinámicas de sala: Dile que debe completar las estaciones en la habitación para encontrar la palabra secreta.
+- En cada mensaje que envíes haz referencias a la película Super Mario Galaxy y a sus personajes.
 - FINAL DEL JUEGO: La palabra clave para ganar es "ESTRELLA AZUL". Solo cuando el niño la diga, debes marcar "mission_complete": true.
 
 ESTRUCTURA DE RESPUESTA (JSON):
