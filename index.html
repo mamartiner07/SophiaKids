@@ -781,18 +781,16 @@
             }
 
             if (isProcessing) {
+                // Cancelar cualquier fade-out en curso
                 if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
-                
-                // NO mostrar UI ni audio si el splash está activo
-                if (!splashPromise) {
-                    container.classList.add('processing');
-                    voiceUI.style.display = 'flex';
-                    document.querySelector('.listening-text').textContent = "Procesando...";
 
-                    if (thinkingAudio) {
-                        thinkingAudio.volume = 1;
-                        thinkingAudio.play().catch(e => console.warn("[Audio] Error playing thinking sound:", e));
-                    }
+                container.classList.add('processing');
+                voiceUI.style.display = 'flex';
+                document.querySelector('.listening-text').textContent = "Procesando...";
+
+                if (thinkingAudio) {
+                    thinkingAudio.volume = 1;
+                    thinkingAudio.play().catch(e => console.warn("[Audio] Error playing thinking sound:", e));
                 }
             } else {
                 container.classList.remove('processing');
@@ -1004,7 +1002,6 @@
 
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('main-header').classList.add('hidden');
-            if (document.getElementById('hero-left')) document.getElementById('hero-left').classList.add('hidden');
 
             // Mostrar Splash Screen y guardar la promesa
             splashPromise = showSplashScreen();
@@ -1041,7 +1038,6 @@
                         // Mostrar UI de conversación
                         document.getElementById('rpg-stats').style.display = 'flex';
                         document.getElementById('sophia-avatar').style.display = 'flex';
-                        if (document.getElementById('hero-left')) document.getElementById('hero-left').classList.remove('hidden');
                     }
 
                     gameState.history.push({ role: "model", text: JSON.stringify(data) });
