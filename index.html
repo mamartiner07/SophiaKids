@@ -86,7 +86,7 @@
             bottom: 0;
             z-index: 15;
             pointer-events: none;
-            animation: heroFloat 4s ease-in-out infinite;
+            animation: heroFloat 5s ease-in-out infinite;
             filter: drop-shadow(0 0 20px rgba(249, 212, 35, 0.3));
         }
 
@@ -108,20 +108,17 @@
         }
 
         .champi-talking #hero-champi {
-            animation: champiTalk 0.2s infinite ease-in-out !important;
+            /* animation: champiTalk 0.2s infinite ease-in-out !important; */
             transform-origin: center 25%;
         }
 
 
         @keyframes heroFloat {
-
-            0%,
-            100% {
+            0%, 100% {
                 transform: translateY(0);
             }
-
             50% {
-                transform: translateY(-12px);
+                transform: translateY(-5px);
             }
         }
 
