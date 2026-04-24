@@ -1138,10 +1138,23 @@
         loadAssets();
     </script>
     <!-- Secret Buttons for Fallback -->
-    <button id="secret-btn-1" style="position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; opacity: 0; z-index: 10000; cursor: default; border: none; background: transparent;"></button>
-    <button id="secret-btn-2" style="position: fixed; bottom: 0; right: 0; width: 60px; height: 60px; opacity: 0; z-index: 10000; cursor: default; border: none; background: transparent;"></button>
+    <button id="secret-btn-1" style="position: fixed; bottom: 10px; left: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;" title="Despegue">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary)">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>
+    </button>
+    <button id="secret-btn-2" style="position: fixed; bottom: 10px; right: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;" title="Vive la Galaxia Magenta">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="#ff00c8">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>
+    </button>
 
     <script>
+        document.getElementById('secret-btn-1').addEventListener('mouseover', function() { this.style.opacity = '1'; });
+        document.getElementById('secret-btn-1').addEventListener('mouseout', function() { this.style.opacity = '0.5'; });
+        document.getElementById('secret-btn-2').addEventListener('mouseover', function() { this.style.opacity = '1'; });
+        document.getElementById('secret-btn-2').addEventListener('mouseout', function() { this.style.opacity = '0.5'; });
+
         document.getElementById('secret-btn-1').addEventListener('click', () => {
             if (gameState.isProcessing) return;
             console.log("[Secret] Despegue triggered");
