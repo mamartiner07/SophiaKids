@@ -713,8 +713,27 @@
             energy: 100,
             xp: 0,
             history: [],
-            isProcessing: false
+            isProcessing: false,
+            isSpeaking: false
         };
+
+        let recognitionInstance = null;
+
+        function stopListening() {
+            if (recognitionInstance) {
+                console.log("[Voice] Stopping current recognition...");
+                recognitionInstance.onend = null;
+                recognitionInstance.onerror = null;
+                recognitionInstance.onresult = null;
+                try {
+                    recognitionInstance.stop();
+                } catch (e) {
+                    recognitionInstance.abort();
+                }
+                recognitionInstance = null;
+            }
+            voiceUI.style.display = 'none';
+        }
 
         let splashPromise = null;
 
@@ -934,13 +953,14 @@
         const voiceUI = document.getElementById('voice-ui');
 
         async function speak(text, cue = 'normal') {
+            stopListening(); // Asegurar que el micro esté apagado antes de hablar
+            gameState.isSpeaking = true;
             try {
                 // Limpiar texto para evitar que el TTS deletree repeticiones largas (ej: AAAAAH)
                 const cleanedText = text.replace(/([a-zA-ZáéíóúÁÉÍÓÚñÑ])\1{2,}/gi, '$1$1');
 
                 console.log("[Audio] Speaking:", text);
                 const colors = { normal: '#00f2ff', alert: '#ff2e63', success: '#2ecc71', critical: '#ff00c8' };
-                // coreGlow styling removed as element was deleted
 
                 setProcessing(true);
                 const response = await callServer('tts', cleanedText);
@@ -957,17 +977,20 @@
                         };
                         audio.onended = () => {
                             console.log("[Audio] Finished");
+                            gameState.isSpeaking = false;
                             if (heroContainer) heroContainer.classList.remove('champi-talking');
                             resolve();
                         };
                         audio.onerror = (e) => {
                             console.error("[Audio] Error:", e);
+                            gameState.isSpeaking = false;
                             if (heroContainer) heroContainer.classList.remove('champi-talking');
                             contentSpan.textContent = text;
                             resolve();
                         };
                         audio.play().catch(err => {
                             console.warn("[Audio] Play blocked/failed:", err);
+                            gameState.isSpeaking = false;
                             if (heroContainer) heroContainer.classList.remove('champi-talking');
                             contentSpan.textContent = text;
                             resolve();
@@ -975,46 +998,64 @@
                     });
                 } else {
                     setProcessing(false);
+                    gameState.isSpeaking = false;
                     addLog(text, 'hero'); // Mostrar texto aunque no haya audio
                     console.error("[Audio] TTS Failed:", response.error);
                 }
             } catch (err) {
                 setProcessing(false);
+                gameState.isSpeaking = false;
                 console.error("[Audio] Crash:", err);
             }
         }
 
         function listen() {
+            if (gameState.isProcessing || gameState.isSpeaking) {
+                console.log("[Voice] Listen rejected: system busy");
+                return;
+            }
+
+            stopListening();
+
             console.log("[Voice] Listening start...");
             const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!Recognition) return addLog("Navegador no soportado para voz", "system");
 
-            const rec = new Recognition();
-            rec.lang = 'es-US';
+            recognitionInstance = new Recognition();
+            recognitionInstance.lang = 'es-US';
             voiceUI.style.display = 'flex';
 
-            rec.onresult = async event => {
+            recognitionInstance.onresult = async event => {
                 const transcript = event.results[0][0].transcript;
                 console.log("[Voice] Result:", transcript);
                 addLog(transcript, 'user');
                 gameState.history.push({ role: "user", text: transcript });
-                voiceUI.style.display = 'none';
+                stopListening();
                 handleResponse(transcript);
             };
 
-            rec.onerror = (e) => {
+            recognitionInstance.onerror = (e) => {
+                if (e.error === 'aborted') return;
                 console.warn("[Voice] Error:", e.error);
-                voiceUI.style.display = 'none';
-                if (e.error !== 'aborted') setTimeout(listen, 1000);
+                stopListening();
+                if (!gameState.isProcessing && !gameState.isSpeaking) {
+                    setTimeout(listen, 1000);
+                }
             };
 
-            rec.onend = () => {
+            recognitionInstance.onend = () => {
                 console.log("[Voice] recognition ended");
-                if (!gameState.isProcessing) {
+                if (!gameState.isProcessing && !gameState.isSpeaking) {
                     voiceUI.style.display = 'none';
                 }
             };
-            rec.start();
+            
+            try {
+                recognitionInstance.start();
+            } catch (e) {
+                console.error("[Voice] Start error:", e);
+                stopListening();
+            }
         }
 
         // Cargar Assets al inicio
@@ -1138,22 +1179,26 @@
         loadAssets();
     </script>
     <!-- Secret Buttons for Fallback -->
-    <button id="secret-btn-1" style="position: fixed; bottom: 10px; left: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;" title="Despegue">
+    <button id="secret-btn-1"
+        style="position: fixed; bottom: 10px; left: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;"
+        title="Despegue">
         <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary)">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
         </svg>
     </button>
-    <button id="secret-btn-2" style="position: fixed; bottom: 10px; right: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;" title="Vive la Galaxia Magenta">
+    <button id="secret-btn-2"
+        style="position: fixed; bottom: 10px; right: 10px; width: 40px; height: 40px; opacity: 0.5; z-index: 10000; cursor: pointer; border: none; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;"
+        title="Vive la Galaxia Magenta">
         <svg viewBox="0 0 24 24" width="32" height="32" fill="#ff00c8">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
         </svg>
     </button>
 
     <script>
-        document.getElementById('secret-btn-1').addEventListener('mouseover', function() { this.style.opacity = '1'; });
-        document.getElementById('secret-btn-1').addEventListener('mouseout', function() { this.style.opacity = '0.5'; });
-        document.getElementById('secret-btn-2').addEventListener('mouseover', function() { this.style.opacity = '1'; });
-        document.getElementById('secret-btn-2').addEventListener('mouseout', function() { this.style.opacity = '0.5'; });
+        document.getElementById('secret-btn-1').addEventListener('mouseover', function () { this.style.opacity = '1'; });
+        document.getElementById('secret-btn-1').addEventListener('mouseout', function () { this.style.opacity = '0.5'; });
+        document.getElementById('secret-btn-2').addEventListener('mouseover', function () { this.style.opacity = '1'; });
+        document.getElementById('secret-btn-2').addEventListener('mouseout', function () { this.style.opacity = '0.5'; });
 
         document.getElementById('secret-btn-1').addEventListener('click', () => {
             if (gameState.isProcessing) return;
