@@ -101,10 +101,23 @@
         /* Animación de Habla */
         /* Animación de Habla Mejorada */
         @keyframes champiTalk {
-            0%, 100% { transform: scale(1, 1) translateY(0); }
-            25% { transform: scale(1.01, 0.96) translateY(2px); }
-            50% { transform: scale(0.99, 1.04) translateY(0px); }
-            75% { transform: scale(1.02, 0.94) translateY(3px); }
+
+            0%,
+            100% {
+                transform: scale(1, 1) translateY(0);
+            }
+
+            25% {
+                transform: scale(1.01, 0.96) translateY(2px);
+            }
+
+            50% {
+                transform: scale(0.99, 1.04) translateY(0px);
+            }
+
+            75% {
+                transform: scale(1.02, 0.94) translateY(3px);
+            }
         }
 
         .champi-talking #hero-champi {
@@ -114,9 +127,12 @@
 
 
         @keyframes heroFloat {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0);
             }
+
             50% {
                 transform: translateY(-5px);
             }
@@ -939,10 +955,10 @@
                             if (heroContainer) heroContainer.classList.add('champi-talking');
                             typeText(contentSpan, text);
                         };
-                        audio.onended = () => { 
-                            console.log("[Audio] Finished"); 
+                        audio.onended = () => {
+                            console.log("[Audio] Finished");
                             if (heroContainer) heroContainer.classList.remove('champi-talking');
-                            resolve(); 
+                            resolve();
                         };
                         audio.onerror = (e) => {
                             console.error("[Audio] Error:", e);
@@ -1120,6 +1136,27 @@
 
         // Ejecutar carga de assets al cargar el script
         loadAssets();
+    </script>
+    <!-- Secret Buttons for Fallback -->
+    <button id="secret-btn-1" style="position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; opacity: 0; z-index: 10000; cursor: default; border: none; background: transparent;"></button>
+    <button id="secret-btn-2" style="position: fixed; bottom: 0; right: 0; width: 60px; height: 60px; opacity: 0; z-index: 10000; cursor: default; border: none; background: transparent;"></button>
+
+    <script>
+        document.getElementById('secret-btn-1').addEventListener('click', () => {
+            if (gameState.isProcessing) return;
+            console.log("[Secret] Despegue triggered");
+            addLog("Despegue", 'user');
+            gameState.history.push({ role: "user", text: "Despegue" });
+            handleResponse("Despegue");
+        });
+
+        document.getElementById('secret-btn-2').addEventListener('click', () => {
+            if (gameState.isProcessing) return;
+            console.log("[Secret] Vive la Galaxia Magenta triggered");
+            addLog("Vive la Galaxia Magenta", 'user');
+            gameState.history.push({ role: "user", text: "Vive la Galaxia Magenta" });
+            handleResponse("Vive la Galaxia Magenta");
+        });
     </script>
 </body>
 
